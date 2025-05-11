@@ -64,7 +64,6 @@ async function CheckProxyIP(proxyIP) {
     // 读取HTTP响应
     const reader = tcpSocket.readable.getReader();
     let responseData = new Uint8Array(0);
-    let receivedData = false;
 
     // 读取所有可用数据
     while (true) {
@@ -75,7 +74,6 @@ async function CheckProxyIP(proxyIP) {
 
       if (done) break;
       if (value) {
-        receivedData = true;
         // 合并数据
         const newData = new Uint8Array(responseData.length + value.length);
         newData.set(responseData);
@@ -94,8 +92,6 @@ async function CheckProxyIP(proxyIP) {
 
     // 解析HTTP响应
     const responseText = new TextDecoder().decode(responseData);
-    const statusMatch = responseText.match(/^HTTP\/\d\.\d\s+(\d+)/i);
-    const statusCode = statusMatch ? parseInt(statusMatch[1]) : null;
 
     // 判断是否成功
     const isSuccessful = responseText.toLowerCase().includes('cloudflare');
@@ -134,52 +130,49 @@ async function HTML(hostname) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Check ProxyIP</title>
-  <link rel="icon" href="https://cf-assets.www.cloudflare.com/dzlvafdwdttg/19kSkLSfWtDcspvQI5pit4/c5630cf25d589a0de91978ca29486259/performance-acceleration-bolt.svg" type="image/x-icon">
+  <title>CheckProxyIP - 代理IP检测</title>
+  <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHBhdGggZmlsbD0iI2ZmOTAwMCIgZD0iTTE2IDJDOCAyIDIgOCAyIDE2czYgMTQgMTQgMTQgMTQtNiAxNC0xNC02LTE0LTE0LTE0em0wIDI2QzkuNCAxOCA0IDEyLjYgNCAxNlM5LjQgNCAxNiA0czEyIDUuNCAxMiAxMi01LjQgMTItMTIgMTJ6Ii8+PHBhdGggZmlsbD0iI2ZmOTAwMCIgZD0iTTE2IDZjLTUuNSAwLTEwIDQuNS0xMCAxMHM0LjUgMTAgMTAgMTAgMTAtNC41IDEwLTEwLTQuNS0xMC0xMC0xMHptMCAxOGMtNC40IDAtOC0zLjYtOC04czMuNi04IDgtOCA4IDMuNiA4IDgtMy42IDgtOCA4eiIvPjxwYXRoIGZpbGw9IiNmZjkwMDAiIGQ9Ik0xNiAxMGMtMy4zIDAtNiAyLjctNiA2czIuNyA2IDYgNiA2LTIuNyA2LTYtMi43LTYtNi02em0wIDEwYy0yLjIgMC00LTEuOC00LTRzMS44LTQgNC00IDQgMS44IDQgNC0xLjggNC00IDR6Ii8+PC9zdmc+" type="image/x-icon">
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: Arial, sans-serif;
       max-width: 900px;
       margin: 0 auto;
       padding: 20px;
-      color: #333;
-      background-color: rgba(248, 249, 250, 0.8);
-      background-image: url('https://cf-assets.www.cloudflare.com/slt3lc6tev37/6VGwVJTzNdd2Jhij9A94so/49da00693309690c84183b645394bb18/Cloudflare_Network_275__Cities_in_100__Countries.png');
-      background-size: cover;
-      background-position: center;
-      background-attachment: fixed;
+      color: #ffffff;
+      background-color: #0a0a0a;
       position: relative;
     }
-    
-    body::before {
-      content: "";
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(255, 255, 255, 0.85);
-      z-index: -1;
-    }
-    
+
     h1, h2, h3 {
-      color: #2c3e50;
+      color: #ffffff;
     }
     h1 {
       text-align: center;
       margin-bottom: 30px;
       font-size: 2.5em;
-      background: linear-gradient(45deg, #3498db, #1abc9c);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    h1 span.ph-style {
+      background-color: #000000;
+      color: #ffffff;
+      padding: 5px 10px;
+      border-radius: 5px;
+    }
+    h1 span.ph-highlight {
+      background-color: #ff9000;
+      color: #000000;
+      padding: 5px 10px;
+      border-radius: 5px;
+      margin-left: 5px;
     }
     .container {
-      background-color: white;
-      border-radius: 10px;
+      background-color: #1a1a1a;
+      border-radius: 5px;
       padding: 25px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
       margin-bottom: 30px;
+      border: 1px solid #333333;
     }
     .form-row {
       display: flex;
@@ -192,6 +185,7 @@ async function HTML(hostname) {
       margin-bottom: 10px;
       font-weight: bold;
       font-size: 1.1em;
+      color: #ffffff;
     }
     .input-wrapper {
       flex: 1;
@@ -200,38 +194,41 @@ async function HTML(hostname) {
     input[type="text"] {
       width: 100%;
       padding: 12px 15px;
-      border: 2px solid #e0e0e0;
+      border: 2px solid #333333;
       border-radius: 6px;
       box-sizing: border-box;
       font-size: 16px;
       transition: border-color 0.3s, box-shadow 0.3s;
+      background-color: #2a2a2a;
+      color: #ffffff;
     }
     input[type="text"]:focus {
-      border-color: #3498db;
-      box-shadow: 0 0 8px rgba(52, 152, 219, 0.5);
+      border-color: #ff9000;
+      box-shadow: 0 0 8px rgba(255, 144, 0, 0.5);
       outline: none;
     }
     .btn-check {
-      background-color: #3498db;
-      color: white;
+      background-color: #ff9000;
+      color: #000000;
       border: none;
       padding: 12px 25px;
       border-radius: 6px;
       cursor: pointer;
       font-size: 16px;
       font-weight: 600;
+      text-transform: uppercase;
       transition: all 0.3s ease;
       position: relative;
       overflow: hidden;
     }
     .btn-check:hover {
-      background-color: #2980b9;
+      background-color: #ffa31a;
       transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 8px rgba(255, 144, 0, 0.3);
     }
     .btn-check:active {
       transform: translateY(0);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 2px 4px rgba(255, 144, 0, 0.2);
     }
     .btn-check::after {
       content: "";
@@ -270,18 +267,18 @@ async function HTML(hostname) {
       display: none;
     }
     .success {
-      background-color: #e8f8f5;
-      color: #16a085;
-      border-left: 5px solid #16a085;
+      background-color: #1a1a1a;
+      color: #ff9000;
+      border-left: 5px solid #ff9000;
     }
     .error {
-      background-color: #fdedeb;
-      color: #c0392b;
-      border-left: 5px solid #c0392b;
+      background-color: #1a1a1a;
+      color: #ff5555;
+      border-left: 5px solid #ff5555;
     }
     .loader {
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #3498db;
+      border: 4px solid #333333;
+      border-top: 4px solid #ff9000;
       border-radius: 50%;
       width: 24px;
       height: 24px;
@@ -296,19 +293,19 @@ async function HTML(hostname) {
     .copy-value {
       display: inline-block;
       padding: 5px 12px;
-      background-color: #f5f7fa;
-      border: 1px solid #e6e9ed;
+      background-color: #2a2a2a;
+      border: 1px solid #444444;
       border-radius: 4px;
       cursor: pointer;
       margin: 3px 0;
       transition: all 0.2s;
       position: relative;
       font-weight: 500;
-      color: #3498db;
+      color: #ff9000;
     }
     .copy-value:hover {
-      background-color: #edf2f7;
-      border-color: #cbd5e0;
+      background-color: #333333;
+      border-color: #ff9000;
     }
     .copy-value::after {
       content: "已复制!";
@@ -316,8 +313,8 @@ async function HTML(hostname) {
       left: calc(100% + 10px);
       top: 50%;
       transform: translateY(-50%);
-      background-color: #333;
-      color: white;
+      background-color: #ff9000;
+      color: #000000;
       padding: 4px 8px;
       border-radius: 4px;
       font-size: 12px;
@@ -334,36 +331,37 @@ async function HTML(hostname) {
       margin-top: 30px;
     }
     .code-block {
-      background-color: #f5f5f5;
+      background-color: #2a2a2a;
       padding: 15px;
       border-radius: 6px;
       overflow-x: auto;
       font-family: 'Courier New', Courier, monospace;
       font-size: 14px;
-      border-left: 4px solid #3498db;
+      border-left: 4px solid #ff9000;
+      color: #ffffff;
     }
     .footer {
       text-align: center;
       margin-top: 30px;
-      color: #7f8c8d;
+      color: #999999;
       font-size: 14px;
       padding: 10px 0;
-      border-top: 1px solid #eee;
+      border-top: 1px solid #333333;
     }
     .section-title {
-      color: #2c3e50;
+      color: #ffffff;
       margin-top: 30px;
       margin-bottom: 15px;
       padding-bottom: 10px;
-      border-bottom: 1px solid #eee;
+      border-bottom: 1px solid #333333;
     }
     .highlight-red {
-        color: red;
+        color: #ff5555;
         font-weight: bold;
     }
     .github-corner svg {
-      fill: rgb(45,175,179);
-      color: rgb(254,254,254);
+      fill: #ff9000;
+      color: #000000;
       position: fixed;
       top: 0;
       right: 0;
@@ -412,7 +410,7 @@ async function HTML(hostname) {
       <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path>
     </svg>
   </a>
-  <h1>Check ProxyIP</h1>
+  <h1><span class="ph-style">Check</span><span class="ph-highlight">ProxyIP</span></h1>
 
   <div class="container">
     <div class="form-row">
@@ -425,13 +423,13 @@ async function HTML(hostname) {
     <div class="loader" id="loader"></div>
     <div id="result"></div>
   </div>
-  
+
   <div class="container api-docs">
     <h2 class="section-title">API 文档</h2>
     <p>您可以通过以下 API 直接检查代理 IP 是否有效:</p>
     <h3>请求格式</h3>
     <div class="code-block">
-      <strong>GET</strong> /check?proxyip=<span style="color: red;">YOUR_PROXY_IP</span>
+      <strong>GET</strong> /check?proxyip=<span style="color: #ff9000;">YOUR_PROXY_IP</span>
     </div>
     <h3>参数说明</h3>
     <ul>
@@ -440,15 +438,15 @@ async function HTML(hostname) {
     <h3>响应Json格式</h3>
     <div class="code-block">
 {<br>
-  &nbsp;&nbsp;"success": true|false,     // 代理 IP 是否有效<br>
-  &nbsp;&nbsp;"proxyIP": "1.2.3.4",      // 如果有效,返回代理 IP,否则为 -1<br>
-  &nbsp;&nbsp;"portRemote": 443,         // 如果有效,返回端口,否则为 -1<br>
-  &nbsp;&nbsp;"timestamp": "2025-05-10T14:44:30.597Z"  // 检查时间<br>
+  &nbsp;&nbsp;<span style="color: #ff9000;">"success"</span>: <span style="color: #00aaff;">true|false</span>,     <span style="color: #999999;">// 代理 IP 是否有效</span><br>
+  &nbsp;&nbsp;<span style="color: #ff9000;">"proxyIP"</span>: <span style="color: #00aaff;">"1.2.3.4"</span>,      <span style="color: #999999;">// 如果有效,返回代理 IP,否则为 -1</span><br>
+  &nbsp;&nbsp;<span style="color: #ff9000;">"portRemote"</span>: <span style="color: #00aaff;">443</span>,         <span style="color: #999999;">// 如果有效,返回端口,否则为 -1</span><br>
+  &nbsp;&nbsp;<span style="color: #ff9000;">"timestamp"</span>: <span style="color: #00aaff;">"2025-05-10T14:44:30.597Z"</span>  <span style="color: #999999;">// 检查时间</span><br>
 }<br>
     </div>
     <h3>示例</h3>
     <div class="code-block">
-curl "https://${hostname}/check?proxyip=1.2.3.4:443"
+<span style="color: #00aaff;">curl</span> <span style="color: #ffffff;">"https://${hostname}/check?proxyip=</span><span style="color: #ff9000;">1.2.3.4:443</span><span style="color: #ffffff;">"</span>
     </div>
   </div>
 
@@ -462,7 +460,7 @@ curl "https://${hostname}/check?proxyip=1.2.3.4:443"
       const resultDiv = document.getElementById('result');
       const loader = document.getElementById('loader');
       const checkBtn = document.getElementById('checkBtn');
-      
+
       const proxyip = proxyipInput.value.trim();
       if (!proxyip) {
         resultDiv.className = 'error';
@@ -470,16 +468,16 @@ curl "https://${hostname}/check?proxyip=1.2.3.4:443"
         resultDiv.innerHTML = '请输入代理IP地址';
         return;
       }
-      
+
       // 显示加载状态
       loader.style.display = 'block';
       checkBtn.disabled = true;
       resultDiv.style.display = 'none';
-      
+
       try {
         const response = await fetch(\`./check?proxyip=\${encodeURIComponent(proxyip)}\`);
         const data = await response.json();
-        
+
         // 处理结果
         if (data.success) {
           resultDiv.className = 'success';
@@ -510,7 +508,7 @@ curl "https://${hostname}/check?proxyip=1.2.3.4:443"
         resultDiv.style.display = 'block';
       }
     }
-    
+
     function copyToClipboard(element) {
       const text = element.textContent;
       navigator.clipboard.writeText(text).then(() => {
@@ -523,7 +521,7 @@ curl "https://${hostname}/check?proxyip=1.2.3.4:443"
         console.error('复制失败:', err);
       });
     }
-    
+
     // 支持回车键提交
     document.getElementById('proxyip').addEventListener('keypress', function(event) {
       if (event.key === 'Enter') {
